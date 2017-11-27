@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="houseinfortab">
+
+   
+    <select id="qry_houseinfortab" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+       select * from houseinfortab
+    </select>
+
+    <insert id="add_userinfo" parameterType="java.util.HashMap">
+        insert into tb_userinfo ( username, userpwd, age, sex) values (#{username},#{userpwd},#{age},#{sex})
+    </insert>
+
+    <select id="qry_userinfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        select * from tb_userinfo where username=#{username} and userpwd=#{userpwd}
+        ]]>
+    </select>
+
+    <select id="qry_alluserinfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        select * from tb_userinfo order by userid desc
+        ]]>
+    </select>
+    
+    <select id="qry_searchinfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        select * from houseinfortab where title like #{searchcontent}
+        ]]>
+    </select>
+    
+     <select id="qry_page" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        select * from houseinfortab where title like #{searchcontent} limit #{page} , 10
+        ]]>
+    </select>
+
+    <select id="qry_tab" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+       select city,longitude,latitude from shuju limit 0,50
+    </select>
+    
+</mapper>
