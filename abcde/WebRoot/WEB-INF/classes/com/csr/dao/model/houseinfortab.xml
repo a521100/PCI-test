@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="houseinfortab">
+
+   
+    <select id="qry_houseinfortab" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+       select * from houseinfortab
+    </select>
+
+    <insert id="add_userinfo" parameterType="java.util.HashMap">
+        insert into tb_userinfo ( username, userpwd, age, sex) values (#{username},#{userpwd},#{age},#{sex})
+    </insert>
+
+    <select id="qry_userinfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        select * from tb_userinfo where username=#{username} and userpwd=#{userpwd}
+        ]]>
+    </select>
+
+    <select id="qry_alluserinfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        select * from tb_userinfo order by userid desc
+        ]]>
+    </select>
+    
+    <select id="qry_searchinfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        select * from houseinfortab where title like #{searchcontent}
+        ]]>
+    </select>
+    
+     <select id="qry_page" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        select * from houseinfortab where title like #{searchcontent} limit #{page} , 10
+        ]]>
+    </select>
+    
+    
+    
+
+    
+    <update id="step" parameterType="java.util.HashMap">
+        <![CDATA[
+        CREATE TABLE IF NOT EXISTS step (eNodeBid VARCHAR(50),Cellid VARCHAR(50),City VARCHAR(255),Quxian VARCHAR(255),Xiaoquming VARCHAR(255),changjingname VARCHAR(255),longitude VARCHAR(255),latitude VARCHAR(255),result VARCHAR(255)) DEFAULT CHARSET=utf8;        ]]>
+    </update>
+    
+    <select id="step0" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        CREATE TABLE b111 AS SELECT * FROM sheet1 WHERE (sheet1.A2+sheet1.A3)> #{N1}
+        ]]>
+    </select>    
+    
+    <update id="step1" parameterType="java.util.HashMap">
+        <![CDATA[
+        CREATE TABLE b111 AS SELECT * FROM sheet1 WHERE (sheet1.A2+sheet1.A3)>700
+        ]]>
+    </update>
+    
+    <update id="step2" parameterType="java.util.HashMap">
+        <![CDATA[
+        CREATE TABLE b222 AS SELECT * FROM b111 WHERE (b111.A2/b111.A1)>(b111.A3/b111.A1)
+        ]]>
+    </update>
+    
+    <insert id="step21" parameterType="java.util.HashMap">
+       <![CDATA[
+       INSERT step(SELECT DISTINCT b222.eNodeBid,b222.Cellid,gongcan.City,gongcan.Quxian,gongcan.Xiaoquming,gongcan.changjingname,gongcan.longitude,gongcan.latitude,'邻区参数配置/容量参数/License问题' FROM b222,gaojing,gongcan WHERE (b222.eNodeBid) NOT IN (gaojing.eNodeBID) AND b222.eNodeBid=gongcan.eNodeBID AND b222.Cellid=gongcan.CellID);        ]]>
+    </insert>
+    
+    <update id="step3" parameterType="java.util.HashMap">
+        <![CDATA[
+        CREATE TABLE b333 AS SELECT * FROM b111 WHERE (b111.A2/b111.A1)<(b111.A3/b111.A1)
+        ]]>
+    </update> 
+    
+    <update id="step31" parameterType="java.util.HashMap">
+        <![CDATA[
+        CREATE TABLE step31 AS SELECT gongcan.eNodeBID,gongcan.CellID,gongcan.tongping,
+        gongcan.PCI,gongcan.latitude,gongcan.longitude,gongcan.changjingname 
+        FROM gongcan,b333 WHERE b333.eNodeBid=gongcan.eNodeBID AND b333.CellID=gongcan.CellID
+        ]]>
+    </update>
+    
+    <update id="step32" parameterType="java.util.HashMap">
+        <![CDATA[
+        CREATE TABLE step32 AS SELECT gongcan.eNodeBID,gongcan.CellID,gongcan.tongping,gongcan.PCI,gongcan.changjingname,gongcan.latitude,gongcan.longitude,step31.eNodeBID as eNodeBID1,step31.CellID as CellID1 FROM gongcan,step31 WHERE (gongcan.PCI=step31.PCI AND gongcan.tongping=step31.tongping) AND gongcan.eNodeBID<>step31.eNodeBID
+        ]]>
+    </update>
+    
+    <update id="step33" parameterType="java.util.HashMap">
+        <![CDATA[
+        CREATE TABLE step33 AS SELECT DISTINCT step32.* FROM step31,step32 WHERE step32.eNodeBID1=step31.eNodeBID AND step32.CellID1=step31.CellID AND step32.latitude<step31.latitude+0.05 AND step32.latitude>step31.latitude-0.05 AND step32.longitude<step31.longitude+0.05  AND step32.longitude>step31.longitude-0.05
+        ]]>
+    </update>
+    
+    <update id="step340" parameterType="java.util.HashMap">
+       <![CDATA[
+        CREATE TABLE step34 AS SELECT b333.eNodeBid,b333.Cellid FROM b333 LEFT JOIN step33 ON b333.eNodeBid = step33.eNodeBID1 WHERE step33.eNodeBID1 IS NULL        ]]>
+    
+    </update>
+    
+    <insert id="step34" parameterType="java.util.HashMap">
+       <![CDATA[
+        INSERT step(SELECT DISTINCT b333.eNodeBid,b333.Cellid,gongcan.City,gongcan.Quxian,gongcan.Xiaoquming,gongcan.changjingname,gongcan.longitude,gongcan.latitude,'其他原因' FROM b333,gongcan,step34 WHERE b333.eNodeBid=gongcan.eNodeBID AND b333.eNodeBid=step34.eNodeBid AND b333.Cellid=gongcan.CellID AND b333.Cellid=step34.Cellid);        ]]>
+    </insert>
+    
+    <insert id="step35" parameterType="java.util.HashMap">
+       <![CDATA[
+       INSERT step(SELECT DISTINCT b333.eNodeBid,b333.Cellid,gongcan.City,gongcan.Quxian,gongcan.Xiaoquming,gongcan.changjingname,gongcan.longitude,gongcan.latitude,'疑似PCI冲突' FROM b333,gongcan,step33 WHERE b333.eNodeBid=gongcan.eNodeBID AND b333.Cellid=gongcan.CellID AND b333.eNodeBid=step33.eNodeBID1);        ]]>
+    </insert>
+    
+    
+    <update id="newstep1" parameterType="java.util.HashMap">
+       <![CDATA[
+CREATE TABLE IF NOT EXISTS step1 (eNodeBid VARCHAR(50),Cellid VARCHAR(50),City VARCHAR(255),Quxian VARCHAR(255),Xiaoquming VARCHAR(255),changjingname VARCHAR(255),longitude VARCHAR(255),latitude VARCHAR(255),result VARCHAR(255)) DEFAULT CHARSET=utf8;
+        ]]>
+    </update>
+    
+    <insert id="newstep2" parameterType="java.util.HashMap">
+       <![CDATA[
+       INSERT step1(SELECT DISTINCT b222.eNodeBid,b222.Cellid,gongcan.City,gongcan.Quxian,gongcan.Xiaoquming,gongcan.changjingname,gongcan.longitude,gongcan.latitude,'邻区参数配置/容量参数/License问题' FROM b222,gaojing,gongcan WHERE (b222.eNodeBid) NOT IN (gaojing.eNodeBID) AND b222.eNodeBid=gongcan.eNodeBID AND b222.Cellid=gongcan.CellID);
+               ]]>
+    </insert>
+    
+    <update id="newstep3" parameterType="java.util.HashMap">
+       <![CDATA[
+CREATE TABLE IF NOT EXISTS step2 (eNodeBid VARCHAR(50),Cellid VARCHAR(50),City VARCHAR(255),Quxian VARCHAR(255),Xiaoquming VARCHAR(255),changjingname VARCHAR(255),longitude VARCHAR(255),latitude VARCHAR(255),result VARCHAR(255)) DEFAULT CHARSET=utf8;
+        ]]>
+    </update>
+    
+    <insert id="newstep4" parameterType="java.util.HashMap">
+       <![CDATA[
+INSERT step2(SELECT DISTINCT b333.eNodeBid,b333.Cellid,gongcan.City,gongcan.Quxian,gongcan.Xiaoquming,gongcan.changjingname,gongcan.longitude,gongcan.latitude,'其他原因' FROM b333,gongcan,step34 WHERE b333.eNodeBid=gongcan.eNodeBID AND b333.eNodeBid=step34.eNodeBid AND b333.Cellid=gongcan.CellID AND b333.Cellid=step34.Cellid);
+               ]]>
+    </insert>
+    
+            <update id="total1" parameterType="java.util.HashMap">
+       <![CDATA[
+CREATE TABLE aa AS SELECT step.result, count(result) as total FROM step GROUP BY step.result
+        ]]>
+    </update>
+    
+            <update id="total2" parameterType="java.util.HashMap">
+       <![CDATA[
+CREATE TABLE ab AS SELECT SUM(total) total FROM aa
+        ]]>
+    </update>
+    
+    <insert id="total4" parameterType="java.util.HashMap">
+       <![CDATA[
+INSERT INTO aa(result,total) VALUES('总数',(SELECT * FROM ab))
+               ]]>
+    </insert>
+    
+    <update id="steppci1" parameterType="java.util.HashMap">
+       <![CDATA[
+CREATE TABLE IF NOT EXISTS step3 (eNodeBid VARCHAR(50),Cellid VARCHAR(50),City VARCHAR(255),Quxian VARCHAR(255),Xiaoquming VARCHAR(255),changjingname VARCHAR(255),longitude VARCHAR(255),latitude VARCHAR(255),juli VARCHAR(255)) DEFAULT CHARSET=utf8;
+        ]]>
+    </update>
+    
+    <update id="steppci2" parameterType="java.util.HashMap">
+       <![CDATA[
+CREATE TABLE stepend AS SELECT step33.eNodeBID,step33.CellID, ROUND(6378.138*2*ASIN(SQRT(POW(SIN((step33.latitude*PI()/180-step.latitude*PI()/180)/2),2)+COS(step33.latitude*PI()/180)*COS(step.latitude*PI()/180)*POW(SIN((step33.longitude*PI()/180-step.longitude*PI()/180)/2),2)))*1000) AS juli FROM step33,step where step33.eNodeBID1 = step.eNodeBid AND step33.CellID1=step.Cellid
+        ]]>
+    </update>
+    
+    <insert id="steppci3" parameterType="java.util.HashMap">
+       <![CDATA[
+INSERT INTO step3(eNodeBid,Cellid,City,Quxian,Xiaoquming,changjingname,longitude,latitude) SELECT DISTINCT gongcan.eNodeBID,gongcan.CellID,gongcan.City,gongcan.Quxian,gongcan.Xiaoquming,gongcan.changjingname,gongcan.longitude,gongcan.latitude FROM gongcan,step33 WHERE step33.eNodeBID1=gongcan.eNodeBID and step33.CellID1=gongcan.CellID 
+               ]]>
+    </insert>
+    
+    <insert id="steppci4" parameterType="java.util.HashMap">
+       <![CDATA[
+INSERT INTO step3(eNodeBid,Cellid,City,Quxian,Xiaoquming,changjingname,longitude,latitude) SELECT DISTINCT gongcan.eNodeBID,gongcan.CellID,gongcan.City,gongcan.Quxian,gongcan.Xiaoquming,gongcan.changjingname,gongcan.longitude,gongcan.latitude FROM gongcan,step33 WHERE step33.eNodeBID=gongcan.eNodeBID and step33.CellID=gongcan.CellID 
+               ]]>
+    </insert>
+    
+    <update id="steppci5" parameterType="java.util.HashMap">
+       <![CDATA[
+UPDATE step3 JOIN stepend ON stepend.eNodeBid = step3.eNodeBid AND stepend.Cellid=step3.Cellid SET step3.juli =stepend.juli
+               ]]>
+    </update>
+    
+    
+    <select id="step4" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT * FROM step 
+        ]]>
+    </select>
+    
+    <select id="step5" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT * FROM step1
+        ]]>
+    </select>
+    
+    <select id="step6" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT * FROM step2 
+        ]]>
+    </select>
+    
+    <select id="getpci" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT * FROM step3 
+        ]]>
+    </select>
+    
+        <select id="gettotal3" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT * FROM aa 
+        ]]>
+    </select>
+    
+     <update id="drop1" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table b111
+        ]]>
+    </update>
+    
+    <update id="drop2" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table b222
+        ]]>
+    </update>
+    
+    <update id="drop3" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table b333
+        ]]>
+    </update>
+    
+    <update id="drop4" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table step31
+        ]]>
+    </update>
+    
+    <update id="drop5" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table step32
+        ]]>
+    </update>
+    
+    <update id="drop6" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table step33
+        ]]>
+    </update>
+    
+    <update id="drop7" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table step
+        ]]>
+    </update>
+    
+    <update id="drop8" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table step34
+        ]]>
+    </update>
+    
+    <update id="drop9" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table step1
+        ]]>
+    </update>
+    
+    <update id="drop10" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table step2
+        ]]>
+    </update>
+    
+    <update id="drop11" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table step3
+        ]]>
+    </update>
+    
+    <update id="drop12" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table stepend
+        ]]>
+    </update>
+    
+        <update id="drop13" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table aa
+        ]]>
+    </update>
+    
+    <update id="drop14" parameterType="java.util.HashMap">
+        <![CDATA[
+        drop table ab
+        ]]>
+    </update>
+    
+</mapper>
